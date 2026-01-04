@@ -168,10 +168,9 @@
     document.getElementById("feels").textContent =
       "Feels like: " + Math.round(data.feelslike) + unitSym;
 
-    const now = (data.rainChanceNow == null) ? "—" : (data.rainChanceNow + "%");
-    const today = (data.rainChanceToday == null) ? "—" : (data.rainChanceToday + "%");
-    document.getElementById("rain").textContent = `Rain now: ${now} • Today: ${today}`;
-  }
+const now = (data.rainChanceNow == null) ? "—" : (data.rainChanceNow + "%");
+document.getElementById("rain").textContent = `Rain now: ${now}`;
+
 
   loadWeather();
 
@@ -180,3 +179,4 @@
 </script>
 </body>
 </html>
+
