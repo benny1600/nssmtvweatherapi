@@ -20,13 +20,13 @@ exports.handler = async (event) => {
 
     const unitSym = (data.units === "metric") ? "°C" : "°F";
 
-    const rainNow = (data.rainChanceNow == null) ? "N/A" : `${data.rainChanceNow}%`;
-    const rainToday = (data.rainChanceToday == null) ? "N/A" : `${data.rainChanceToday}%`;
+   const rainNow = (data.rainChanceNow == null) ? "N/A" : `${data.rainChanceNow}%`;
 
-    const msg =
-      `Weather at ${data.park}: ${Math.round(data.temp)}${unitSym}, ` +
-      `${data.conditions || "Conditions unavailable"}. ` +
-      `Rain now: ${rainNow} • Today: ${rainToday}.`;
+const msg =
+  `Weather at ${data.park}: ${Math.round(data.temp)}${unitSym}, ` +
+  `${data.conditions || "Conditions unavailable"}. ` +
+  `Rain now: ${rainNow}.`;
+
 
     return text(200, msg);
   } catch (e) {
@@ -44,3 +44,4 @@ function text(statusCode, body) {
     body,
   };
 }
+
