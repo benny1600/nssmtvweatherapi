@@ -120,7 +120,24 @@
   </style>
 </head>
 <body>
-  <div class="wrap">
+    <div class="wrap">
+
+  <!-- DSK anchor: prevents instant removal -->
+  <div style="
+    position:absolute;
+    top:0; left:0;
+    width:1px; height:1px;
+    background: rgba(255,255,255,0.01);
+    pointer-events:none;
+  "></div>
+
+  <div id="card" class="card">
+    ...
+  </div>
+
+</div>
+
+    
     <div id="card" class="card">
       <div class="top">
         <div class="brand">Not So Scary Mary TV</div>
@@ -203,5 +220,6 @@
 </script>
 </body>
 </html>
+
 
 
