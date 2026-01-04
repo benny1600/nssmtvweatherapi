@@ -120,7 +120,7 @@
 
       <div class="chips">
         <div class="chip" id="feels">Feels like: —</div>
-        <div class="chip" id="rain">Rain chance: —</div>
+        <div class="chip" id="rain">Rain: —</div>
       </div>
     </div>
   </div>
@@ -129,6 +129,7 @@
   const qs = new URLSearchParams(location.search);
   const park = qs.get("park") || "epcot";
   const units = qs.get("units") || "us";
+  const refresh = parseInt(qs.get("refresh") || "60", 10); // seconds
 
   function iconToEmoji(icon){
     const map = {
@@ -166,12 +167,16 @@
     document.getElementById("icon").textContent = iconToEmoji(data.icon);
     document.getElementById("feels").textContent =
       "Feels like: " + Math.round(data.feelslike) + unitSym;
-    document.getElementById("rain").textContent =
-      "Rain chance: " + (data.rainChance ?? "—") + "%";
+
+    const now = (data.rainChanceNow == null) ? "—" : (data.rainChanceNow + "%");
+    const today = (data.rainChanceToday == null) ? "—" : (data.rainChanceToday + "%");
+    document.getElementById("rain").textContent = `Rain now: ${now} • Today: ${today}`;
   }
 
   loadWeather();
-  setInterval(loadWeather, 60000);
+
+  const ms = Math.max(15, isNaN(refresh) ? 60 : refresh) * 1000;
+  setInterval(loadWeather, ms);
 </script>
 </body>
 </html>
