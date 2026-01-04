@@ -2,7 +2,7 @@ exports.handler = async (event) => {
   try {
     const params = event.queryStringParameters || {};
     const parkKey = (params.park || "epcot").toLowerCase().trim();
-    const units = (params.units || "us").toLowerCase(); // us or metric
+    const units = (params.units || "us").toLowerCase().trim(); // us or metric
     const key = process.env.VISUALCROSSING_KEY;
 
     if (!key) {
@@ -28,7 +28,7 @@ exports.handler = async (event) => {
 
     const park = PARKS[parkKey] || {
       name: params.park || "EPCOT",
-      q: params.park || "28.3747,-81.5494",
+      q: params.park || "28.3747,-81.5494", // fallback: treat as location string or coords
     };
 
     const unitGroup = units === "metric" ? "metric" : "us";
@@ -42,29 +42,43 @@ exports.handler = async (event) => {
       "&contentType=json";
 
     const resp = await fetch(url, { headers: { Accept: "application/json" } });
+
     if (!resp.ok) {
       const text = await resp.text();
-      return json(502, { ok: false, error: "Upstream error", status: resp.status, body: text });
+      return json(502, {
+        ok: false,
+        error: "Upstream error from Visual Crossing",
+        status: resp.status,
+        body: text,
+      });
     }
 
     const data = await resp.json();
     const current = data.currentConditions || {};
     const today = (data.days && data.days[0]) ? data.days[0] : {};
 
-    const rainChance =
+    // Rain chance NOW (current), and TODAY (forecast)
+    const rainChanceNow =
+      (typeof current.precipprob === "number") ? Math.round(current.precipprob) : null;
+
+    const rainChanceToday =
       (typeof today.precipprob === "number") ? Math.round(today.precipprob) :
-      (typeof current.precipprob === "number") ? Math.round(current.precipprob) :
+      (typeof rainChanceNow === "number") ? rainChanceNow :
       null;
 
     const payload = {
       ok: true,
       park: park.name,
       units: unitGroup,
+
       temp: num(current.temp),
       feelslike: num(current.feelslike),
       conditions: current.conditions || null,
       icon: current.icon || today.icon || null,
-      rainChance,
+
+      rainChanceNow,
+      rainChanceToday,
+
       updatedEpoch: current.datetimeEpoch || null,
     };
 
