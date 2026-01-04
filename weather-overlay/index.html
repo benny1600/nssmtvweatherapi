@@ -101,6 +101,16 @@
       border-radius:999px;
       border:1px solid rgba(255,255,255,0.15);
     }
+
+    .err{
+      margin-top:10px;
+      font-size:12px;
+      color: rgba(255,255,255,0.75);
+      display:none;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .err.show{ display:block; }
   </style>
 </head>
 
@@ -120,8 +130,10 @@
 
       <div class="chips">
         <div class="chip" id="feels">Feels like: —</div>
-        <div class="chip" id="rain">Rain: —</div>
+        <div class="chip" id="rain">Rain now: —</div>
       </div>
+
+      <div class="err" id="err"></div>
     </div>
   </div>
 
@@ -149,34 +161,56 @@
     return map[icon] || "⛅";
   }
 
+  function showErr(msg){
+    const el = document.getElementById("err");
+    el.textContent = msg;
+    el.classList.add("show");
+  }
+  function clearErr(){
+    const el = document.getElementById("err");
+    el.textContent = "";
+    el.classList.remove("show");
+  }
+
   async function loadWeather(){
-    const url = `/.netlify/functions/weather?park=${encodeURIComponent(park)}&units=${encodeURIComponent(units)}`;
-    const res = await fetch(url);
-    const data = await res.json();
+    // ABSOLUTE same-origin function URL (prevents path/caching weirdness)
+    const endpoint = new URL("/.netlify/functions/weather", location.origin);
+    endpoint.searchParams.set("park", park);
+    endpoint.searchParams.set("units", units);
+    endpoint.searchParams.set("_", Date.now()); // cache-bust
 
-    if(!data.ok){
+    try{
+      const res = await fetch(endpoint.toString(), { cache: "no-store" });
+      const data = await res.json();
+
+      if(!data || !data.ok){
+        showErr("Weather fetch failed.\n" + JSON.stringify(data, null, 2));
+        document.getElementById("park").textContent = "Weather unavailable";
+        return;
+      }
+
+      clearErr();
+
+      const unitSym = data.units === "metric" ? "°C" : "°F";
+      document.getElementById("park").textContent = data.park;
+      document.getElementById("temp").textContent = Math.round(data.temp) + unitSym;
+      document.getElementById("cond").textContent = data.conditions || "";
+      document.getElementById("icon").textContent = iconToEmoji(data.icon);
+      document.getElementById("feels").textContent =
+        "Feels like: " + Math.round(data.feelslike) + unitSym;
+
+      const now = (data.rainChanceNow == null) ? "—" : (data.rainChanceNow + "%");
+      document.getElementById("rain").textContent = "Rain now: " + now;
+
+    } catch (e){
+      showErr("Fetch exception:\n" + (e && e.message ? e.message : String(e)));
       document.getElementById("park").textContent = "Weather unavailable";
-      return;
     }
-
-    const unitSym = data.units === "metric" ? "°C" : "°F";
-
-    document.getElementById("park").textContent = data.park;
-    document.getElementById("temp").textContent = Math.round(data.temp) + unitSym;
-    document.getElementById("cond").textContent = data.conditions || "";
-    document.getElementById("icon").textContent = iconToEmoji(data.icon);
-    document.getElementById("feels").textContent =
-      "Feels like: " + Math.round(data.feelslike) + unitSym;
-
-const now = (data.rainChanceNow == null) ? "—" : (data.rainChanceNow + "%");
-document.getElementById("rain").textContent = `Rain now: ${now}`;
-
+  }
 
   loadWeather();
-
   const ms = Math.max(15, isNaN(refresh) ? 60 : refresh) * 1000;
   setInterval(loadWeather, ms);
 </script>
 </body>
 </html>
-
